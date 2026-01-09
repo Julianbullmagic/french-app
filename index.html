@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Vocabulary Quiz</title>
+    <style>
+        :root {
+            --primary: #0055A4; /* French Blue */
+            --primary-dark: #003d7a;
+            --surface: #ffffff;
+            --background: #f5f5f5;
+            --error: #EF4135; /* French Red */
+            --success: #00c853;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-bottom: 1rem;
+            touch-action: manipulation; /* Improves touch response */
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            margin-top: 1rem;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+
+        .btn-outline:hover {
+            background-color: #e3f2fd;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Quiz Specific Styles */
+        .lang-indicator {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .word-display {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .feedback-stats {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            min-height: 1.2em;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .input-correct {
+            border-color: var(--success) !important;
+            background-color: #e8f5e9;
+            color: #00600f;
+        }
+
+        .input-incorrect {
+            border-color: var(--error) !important;
+            background-color: #ffebee;
+            color: var(--error);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #eee;
+            margin-top: 2rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .setup-screen {
+            animation: fadeIn 0.5s;
+        }
+
+        .quiz-screen {
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Setup Screen -->
+    <div id="setupScreen" class="container setup-screen">
+        <h1>French Trainer</h1>
+        <p>Master the 100 common words.</p>
+        
+        <div class="input-group">
+            <label for="progressInput">How many words have you learned?</label>
+            <input type="number" id="progressInput" min="0" max="100" placeholder="e.g., 10">
+        </div>
+
+        <button class="btn" onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quizScreen" class="container quiz-screen hidden">
+        <div class="lang-indicator" id="langIndicator"></div>
+        <div class="word-display" id="questionWord">Bonjour</div>
+        
+        <div class="input-group">
+            <input type="text" id="answerInput" placeholder="Type translation..." autocomplete="off">
+        </div>
+        
+        <button class="btn" onclick="checkAnswer()">Submit</button>
+
+        <div class="feedback-stats" id="statsDisplay"></div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+
+        <button class="btn btn-outline" onclick="copyAiPrompt()">
+            📋 Copy AI Practice Prompt
+        </button>
+    </div>
+
+    <script>
+        // French Word List (Top ~100)
+        const fullWordList = [
+            { fr: "le", en: "the" }, { fr: "de", en: "of" }, { fr: "un", en: "a" }, { fr: "à", en: "to" },
+            { fr: "être", en: "to be" }, { fr: "et", en: "and" }, { fr: "en", en: "in" }, { fr: "avoir", en: "to have" },
+            { fr: "que", en: "that" }, { fr: "pour", en: "for" }, { fr: "dans", en: "in" }, { fr: "ce", en: "this" },
+            { fr: "il", en: "he" }, { fr: "qui", en: "who" }, { fr: "ne", en: "not" }, { fr: "sur", en: "on" },
+            { fr: "se", en: "oneself" }, { fr: "pas", en: "not" }, { fr: "plus", en: "more" }, { fr: "pouvoir", en: "to be able" },
+            { fr: "par", en: "by" }, { fr: "je", en: "I" }, { fr: "avec", en: "with" }, { fr: "tout", en: "all" },
+            { fr: "faire", en: "to do" }, { fr: "son", en: "his" }, { fr: "mettre", en: "to put" }, { fr: "autre", en: "other" },
+            { fr: "on", en: "one" }, { fr: "mais", en: "but" }, { fr: "nous", en: "we" }, { fr: "comme", en: "like" },
+            { fr: "ou", en: "or" }, { fr: "si", en: "if" }, { fr: "leur", en: "their" }, { fr: "y", en: "there" },
+            { fr: "dire", en: "to say" }, { fr: "elle", en: "she" }, { fr: "devoir", en: "to have to" }, { fr: "avant", en: "before" },
+            { fr: "deux", en: "two" }, { fr: "même", en: "same" }, { fr: "prendre", en: "to take" }, { fr: "aussi", en: "also" },
+            { fr: "celui", en: "that one" }, { fr: "donner", en: "to give" }, { fr: "bien", en: "well" }, { fr: "où", en: "where" },
+            { fr: "fois", en: "time" }, { fr: "vous", en: "you" }, { fr: "encore", en: "again" }, { fr: "nouveau", en: "new" },
+            { fr: "aller", en: "to go" }, { fr: "cela", en: "that" }, { fr: "car", en: "because" }, { fr: "moins", en: "less" },
+            { fr: "petit", en: "small" }, { fr: "très", en: "very" }, { fr: "temps", en: "time" }, { fr: "grand", en: "big" },
+            { fr: "voir", en: "to see" }, { fr: "venir", en: "to come" }, { fr: "jour", en: "day" }, { fr: "femme", en: "woman" },
+            { fr: "homme", en: "man" }, { fr: "chose", en: "thing" }, { fr: "vie", en: "life" }, { fr: "savoir", en: "to know" },
+            { fr: "falloir", en: "to be necessary" }, { fr: "mon", en: "my" }, { fr: "enfant", en: "child" }, { fr: "regarder", en: "to look" },
+            { fr: "sans", en: "without" }, { fr: "monde", en: "world" }, { fr: "puis", en: "then" }, { fr: "demander", en: "to ask" },
+            { fr: "fin", en: "end" }, { fr: "mot", en: "word" }, { fr: "gens", en: "people" }, { fr: "trop", en: "too much" },
+            { fr: "ici", en: "here" }, { fr: "aimer", en: "to like" }, { fr: "croire", en: "to believe" }, { fr: "jamais", en: "never" },
+            { fr: "bon", en: "good" }, { fr: "toujours", en: "always" }, { fr: "vouloir", en: "to want" }, { fr: "trouver", en: "to find" },
+            { fr: "comprendre", en: "to understand" }, { fr: "rester", en: "to stay" }, { fr: "passer", en: "to pass" }, { fr: "entre", en: "between" },
+            { fr: "parler", en: "to speak" }, { fr: "non", en: "no" }, { fr: "merci", en: "thank you" }, { fr: "oui", en: "yes" }
+        ];
+
+        const grammarBank = [
+          {
+            id: 'g_gender_le',
+            type: 'grammar',
+            promptFr: 'Article + noun: ___ problème (choose le/la)',
+            acceptable: ['le'],
+            topic: 'Gender'
+          },
+          {
+            id: 'g_gender_la',
+            type: 'grammar',
+            promptFr: 'Article + noun: ___ maison (choose le/la)',
+            acceptable: ['la'],
+            topic: 'Gender'
+          },
+          {
+            id: 'g_plural_s',
+            type: 'grammar',
+            promptFr: 'Make plural: "chat" ->',
+            acceptable: ['chats'],
+            topic: 'Pluralization'
+          },
+          {
+            id: 'g_subj_pron',
+            type: 'grammar',
+            promptFr: 'Translate "We" ->',
+            acceptable: ['nous'],
+            topic: 'Pronouns'
+          },
+          {
+            id: 'g_etre',
+            type: 'grammar',
+            promptFr: 'Conjugate: Je ___ (être) ->',
+            acceptable: ['suis'],
+            topic: 'Être (To be)'
+          },
+          {
+            id: 'g_avoir',
+            type: 'grammar',
+            promptFr: 'Conjugate: J\'___ (avoir) ->',
+            acceptable: ['ai'],
+            topic: 'Avoir (To have)'
+          },
+          {
+            id: 'g_pres_er',
+            type: 'grammar',
+            promptFr: 'Conjugate: parler (je, présent) ->',
+            acceptable: ['parle'],
+            topic: 'Present Tense (-er)'
+          },
+          {
+            id: 'g_negation',
+            type: 'grammar',
+            promptFr: 'Negate: "Je mange" -> "Je ___ mange ___"',
+            acceptable: ['ne pas', 'ne...pas', 'ne pas'],
+            topic: 'Negation'
+          }
+        ];
+
+        // State
+        let quizQueue = [];
+        let currentCard = null;
+        let correctCounts = {};
+        let totalItems = 0;
+        let itemsDone = 0;
+        let isProcessing = false;
+        
+        // Session Data for Export
+        let sessionNewWords = [];
+        let sessionReviewWords = [];
+
+        // Elements
+        const setupScreen = document.getElementById('setupScreen');
+        const quizScreen = document.getElementById('quizScreen');
+        const progressInput = document.getElementById('progressInput');
+        const questionWordEl = document.getElementById('questionWord');
+        const answerInput = document.getElementById('answerInput');
+        const statsDisplay = document.getElementById('statsDisplay');
+        const progressBar = document.getElementById('progressBar');
+        const langIndicator = document.getElementById('langIndicator');
+
+        // Logic
+        function startQuiz() {
+            const learnedCount = parseInt(progressInput.value) || 0;
+            
+            // 1. Identify segments
+            const startPrior = Math.max(0, learnedCount - 40);
+            const priorWords = fullWordList.slice(startPrior, learnedCount);
+            const newWords = fullWordList.slice(learnedCount, learnedCount + 20);
+
+            let randomWords = [];
+            if (startPrior > 0) {
+                const pool = fullWordList.slice(0, startPrior);
+                pool.sort(() => Math.random() - 0.5);
+                randomWords = pool.slice(0, 40);
+            }
+
+            // Store for AI Prompt (Unique French words)
+            sessionNewWords = newWords.map(w => w.fr);
+            sessionReviewWords = [...new Set([...priorWords, ...randomWords].map(w => w.fr))];
+
+            // 2. Build Base Array (Weighted)
+            // "The 20 new words are copied twice (so there are three times as many of them)"
+            const newWordsTripled = [];
+            newWords.forEach(w => {
+                newWordsTripled.push(w, w, w);
+            });
+
+            const baseSet = [
+                ...priorWords,
+                ...newWordsTripled,
+                ...randomWords
+            ];
+
+            // 3. Replicate 10 times
+            let finalArray = [];
+            for (let i = 0; i < 10; i++) {
+                finalArray = finalArray.concat(baseSet);
+            }
+
+            if (finalArray.length === 0) {
+                alert("Please increase the number of learned words or check the word list.");
+                return;
+            }
+
+            // 4. Shuffle Final Queue
+            quizQueue = finalArray.sort(() => Math.random() - 0.5);
+
+            // 4b. Mix in Grammar
+            const segmentSize = Math.floor(quizQueue.length / (grammarBank.length || 1));
+            
+            grammarBank.forEach((gItem, index) => {
+                const bucketIndex = (grammarBank.length - 1) - index;
+                let pos = (bucketIndex * segmentSize) + Math.floor(Math.random() * segmentSize);
+                pos = Math.max(0, Math.min(pos, quizQueue.length));
+                quizQueue.splice(pos, 0, gItem);
+            });
+
+            // 5. Add Intro Phase (New Words x 2)
+            const introWords = [];
+            introWords.push(...newWords);
+            introWords.push(...newWords);
+            introWords.reverse(); // Reverse for popping logic
+
+            quizQueue.push(...introWords);
+
+            totalItems = quizQueue.length;
+            itemsDone = 0;
+
+            // Reset stats for new words
+            newWords.forEach(w => {
+                if (!correctCounts[w.fr]) correctCounts[w.fr] = 0;
+            });
+
+            setupScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            nextCard();
+        }
+
+        function nextCard() {
+            if (quizQueue.length === 0) {
+                alert("Quiz Complete! C'est magnifique!");
+                location.reload();
+                return;
+            }
+
+            isProcessing = false;
+            const wordObj = quizQueue.pop();
+            itemsDone++;
+            updateProgress();
+
+            if (wordObj.type === 'grammar') {
+                currentCard = {
+                    wordObj: wordObj,
+                    mode: 'grammar',
+                    question: wordObj.promptFr,
+                    answer: wordObj.acceptable[0],
+                    acceptable: wordObj.acceptable
+                };
+                questionWordEl.textContent = currentCard.question;
+                langIndicator.textContent = `Grammar: ${wordObj.topic}`;
+            } else {
+                const mode = Math.random() < 0.5 ? 'toEN' : 'toFR';
+                
+                currentCard = {
+                    wordObj: wordObj,
+                    mode: mode,
+                    question: mode === 'toEN' ? wordObj.fr : wordObj.en,
+                    answer: mode === 'toEN' ? wordObj.en : wordObj.fr,
+                    acceptable: [mode === 'toEN' ? wordObj.en : wordObj.fr]
+                };
+
+                questionWordEl.textContent = currentCard.question;
+                langIndicator.textContent = mode === 'toEN' ? "French → English" : "English → French";
+            }
+            
+            answerInput.value = "";
+            answerInput.className = "";
+            answerInput.focus();
+            statsDisplay.textContent = "";
+        }
+
+        function checkAnswer() {
+            if (isProcessing) return;
+
+            const userVal = answerInput.value.trim().toLowerCase();
+            // Check if any acceptable answer matches
+            const isCorrect = currentCard.acceptable.some(a => a.toLowerCase() === userVal);
+            
+            isProcessing = true;
+
+            if (isCorrect) {
+                // Correct
+                answerInput.classList.add('input-correct');
+                
+                if (currentCard.wordObj.fr && correctCounts.hasOwnProperty(currentCard.wordObj.fr)) {
+                    correctCounts[currentCard.wordObj.fr]++;
+                    statsDisplay.textContent = `Correct! You've mastered "${currentCard.wordObj.fr}" ${correctCounts[currentCard.wordObj.fr]} times.`;
+                } else {
+                    statsDisplay.textContent = "Correct!";
+                }
+
+                setTimeout(() => {
+                    nextCard();
+                }, 1000);
+
+            } else {
+                // Incorrect
+                answerInput.classList.add('input-incorrect');
+                statsDisplay.style.color = "var(--error)";
+                statsDisplay.textContent = `Incorrect. The answer was "${currentCard.answer}".`;
+
+                setTimeout(() => {
+                    statsDisplay.style.color = ""; // Reset color
+                    nextCard();
+                }, 2000);
+            }
+        }
+
+        function updateProgress() {
+            const pct = (itemsDone / totalItems) * 100;
+            progressBar.style.width = pct + "%";
+        }
+
+        function copyAiPrompt() {
+            if (sessionNewWords.length === 0 && sessionReviewWords.length === 0) {
+                alert("Start the quiz first to generate a prompt.");
+                return;
+            }
+
+            const promptText = `I would like you to help me practice French by having a conversation with me using only these French words. Please try to use the newly added words (listed first) more frequently than the rest in order to help me remember them.
+
+NEW WORDS (Prioritize these):
+${sessionNewWords.join(', ')}
+
+REVIEW WORDS:
+${sessionReviewWords.join(', ')}`;
+
+            navigator.clipboard.writeText(promptText).then(() => {
+                const btn = document.querySelector('.btn-outline');
+                const originalText = btn.textContent;
+                btn.textContent = "✅ Copied to Clipboard!";
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert("Failed to copy to clipboard. Please allow clipboard permissions.");
+            });
+        }
+
+        // Event Listeners
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+    </script>
+</body>
+</html>
